@@ -128,51 +128,53 @@ const App: React.FC = () => {
             }
             ctx.drawImage(image, sx, sy, sWidth, sHeight, 0, 0, canvas.width, canvas.height);
             
-            // --- Draw Social Media Overlay ---
-            const loadIcon = (svg: string): Promise<HTMLImageElement> => {
-              return new Promise((resolve, reject) => {
-                const icon = new Image();
-                icon.onload = () => resolve(icon);
-                icon.onerror = reject;
-                icon.src = `data:image/svg+xml;base64,${btoa(svg.replace('{color}', 'white'))}`;
-              });
-            };
-            
-            const [instaIcon, pinterIcon] = await Promise.all([loadIcon(INSTAGRAM_SVG), loadIcon(PINTEREST_SVG)]);
+            // --- Draw Social Media Overlay (if handle is provided) ---
+            if (socialHandle.trim() !== '') {
+              const loadIcon = (svg: string): Promise<HTMLImageElement> => {
+                return new Promise((resolve, reject) => {
+                  const icon = new Image();
+                  icon.onload = () => resolve(icon);
+                  icon.onerror = reject;
+                  icon.src = `data:image/svg+xml;base64,${btoa(svg.replace('{color}', 'white'))}`;
+                });
+              };
+              
+              const [instaIcon, pinterIcon] = await Promise.all([loadIcon(INSTAGRAM_SVG), loadIcon(PINTEREST_SVG)]);
 
-            const padding = canvas.width * 0.03;
-            const iconSize = canvas.width * 0.035;
-            const textPadding = iconSize * 0.3;
-            
-            const socialFont = `bold ${iconSize * 0.7}px "Inter", sans-serif`;
-            ctx.font = socialFont;
-            ctx.textBaseline = 'middle';
-            ctx.textAlign = 'left';
-            
-            // --- Draw background for social links ---
-            const bgPadding = padding * 0.5;
-            const textWidth = ctx.measureText(socialHandle).width;
-            const pinterestY = padding + iconSize + textPadding * 2;
-            
-            const bgX = padding - bgPadding;
-            const bgY = padding - bgPadding;
-            const bgWidth = iconSize + textPadding + textWidth + (bgPadding * 2);
-            const bgHeight = (pinterestY + iconSize) - padding + (bgPadding * 2);
+              const padding = canvas.width * 0.03;
+              const iconSize = canvas.width * 0.035;
+              const textPadding = iconSize * 0.3;
+              
+              const socialFont = `bold ${iconSize * 0.7}px "Inter", sans-serif`;
+              ctx.font = socialFont;
+              ctx.textBaseline = 'middle';
+              ctx.textAlign = 'left';
+              
+              // --- Draw background for social links ---
+              const bgPadding = padding * 0.5;
+              const textWidth = ctx.measureText(socialHandle).width;
+              const pinterestY = padding + iconSize + textPadding * 2;
+              
+              const bgX = padding - bgPadding;
+              const bgY = padding - bgPadding;
+              const bgWidth = iconSize + textPadding + textWidth + (bgPadding * 2);
+              const bgHeight = (pinterestY + iconSize) - padding + (bgPadding * 2);
 
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
-            ctx.shadowColor = 'transparent';
-            ctx.fillRect(bgX, bgY, bgWidth, bgHeight);
-            
-            // --- Draw Social Icons and Text ---
-            ctx.fillStyle = 'white';
+              ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+              ctx.shadowColor = 'transparent';
+              ctx.fillRect(bgX, bgY, bgWidth, bgHeight);
+              
+              // --- Draw Social Icons and Text ---
+              ctx.fillStyle = 'white';
 
-            // Instagram
-            ctx.drawImage(instaIcon, padding, padding, iconSize, iconSize);
-            ctx.fillText(socialHandle, padding + iconSize + textPadding, padding + iconSize / 2);
+              // Instagram
+              ctx.drawImage(instaIcon, padding, padding, iconSize, iconSize);
+              ctx.fillText(socialHandle, padding + iconSize + textPadding, padding + iconSize / 2);
 
-            // Pinterest
-            ctx.drawImage(pinterIcon, padding, pinterestY, iconSize, iconSize);
-            ctx.fillText(socialHandle, padding + iconSize + textPadding, pinterestY + iconSize / 2);
+              // Pinterest
+              ctx.drawImage(pinterIcon, padding, pinterestY, iconSize, iconSize);
+              ctx.fillText(socialHandle, padding + iconSize + textPadding, pinterestY + iconSize / 2);
+            }
 
             // --- Draw Prompt Overlay ---
             // Dynamic styling based on aspect ratio
@@ -297,7 +299,7 @@ const App: React.FC = () => {
               </div>
 
               <div>
-                <label htmlFor="social" className="block text-sm font-medium text-gray-300 mb-2">2. Social Media Felhasználónév</label>
+                <label htmlFor="social" className="block text-sm font-medium text-gray-300 mb-2">2. Social Media Felhasználónév (opcionális)</label>
                 <input 
                   type="text" 
                   id="social" 
