@@ -1,0 +1,5 @@
+{
+  "name": "AI Image Prompt felirat",
+  "description": "An application to add a prompt and social media handles to AI-generated images, then crop them to various aspect ratios.",
+  "requestFramePermissions": []
+}
