@@ -48,12 +48,20 @@ const App: React.FC = () => {
   const [socialHandle, setSocialHandle] = useState<string>('@pragerfoto');
   const [selectedRatios, setSelectedRatios] = useState<Record<AspectRatios, boolean>>({
     '9:16': true,
-    '16:9': false,
+    '2:3': false,
+    '3:4': false,
+    '4:5': false,
     '1:1': false,
+    '5:4': false,
+    '4:3': false,
+    '16:9': false,
   });
   const [generatedImages, setGeneratedImages] = useState<GeneratedImage[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  
+  const ratioOrder: AspectRatios[] = ['9:16', '2:3', '3:4', '4:5', '1:1', '5:4', '4:3', '16:9'];
+
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -182,22 +190,32 @@ const App: React.FC = () => {
 
             switch (ratio) {
               case '16:9':
-                promptAreaY = canvas.height * 0.60; // Move up for wide format
-                promptTitleSize = canvas.width * 0.045; // Smaller font for wide format
-                promptBodySize = canvas.width * 0.018; // Smaller font for wide format
+                promptAreaY = canvas.height * 0.60;
+                promptTitleSize = canvas.width * 0.045;
+                promptBodySize = canvas.width * 0.018;
+                break;
+              case '4:3':
+              case '5:4':
+                promptAreaY = canvas.height * 0.65;
+                promptTitleSize = canvas.width * 0.06;
+                promptBodySize = canvas.width * 0.025;
                 break;
               case '1:1':
-                promptAreaY = canvas.height * 0.70; // Move up slightly for square
+                promptAreaY = canvas.height * 0.70;
                 promptTitleSize = canvas.width * 0.08;
                 promptBodySize = canvas.width * 0.03;
                 break;
               case '9:16':
+              case '2:3':
+              case '3:4':
+              case '4:5':
               default:
-                promptAreaY = canvas.height * 0.75; // Default for tall format
+                promptAreaY = canvas.height * 0.75;
                 promptTitleSize = canvas.width * 0.08;
                 promptBodySize = canvas.width * 0.03;
                 break;
             }
+
 
             const promptPaddingX = canvas.width * 0.1;
             const promptMaxWidth = canvas.width - (promptPaddingX * 2);
@@ -325,7 +343,7 @@ const App: React.FC = () => {
               <div>
                 <h3 className="block text-sm font-medium text-gray-300 mb-2">4. Képarányok kiválasztása</h3>
                 <div className="flex flex-wrap gap-3">
-                  {(Object.keys(ASPECT_RATIO_CONFIG) as AspectRatios[]).map(ratio => (
+                  {ratioOrder.map(ratio => (
                     <button 
                       key={ratio} 
                       onClick={() => handleRatioChange(ratio)}

@@ -1,4 +1,3 @@
-
 import { AspectRatioConfig, AspectRatios } from './types';
 
 export const INSTAGRAM_SVG = `
@@ -14,7 +13,15 @@ export const PINTEREST_SVG = `
 </svg>`;
 
 export const ASPECT_RATIO_CONFIG: Record<AspectRatios, AspectRatioConfig> = {
+  // Portrait
   '9:16': { width: 1080, height: 1920 },
-  '16:9': { width: 1920, height: 1080 },
+  '2:3': { width: 1080, height: 1620 },
+  '3:4': { width: 1080, height: 1440 },
+  '4:5': { width: 1080, height: 1350 },
+  // Square
   '1:1': { width: 1080, height: 1080 },
+  // Landscape
+  '5:4': { width: 1350, height: 1080 },
+  '4:3': { width: 1440, height: 1080 },
+  '16:9': { width: 1920, height: 1080 },
 };
