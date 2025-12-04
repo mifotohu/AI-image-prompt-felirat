@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { INSTAGRAM_SVG, PINTEREST_SVG } from './constants';
+import { INSTAGRAM_SVG, PINTEREST_SVG, GENERATOR_SVG } from './constants';
 import { AspectRatios } from './types';
 import { ASPECT_RATIO_CONFIG } from './constants';
 
@@ -46,6 +46,7 @@ const App: React.FC = () => {
   const [sourceImage, setSourceImage] = useState<string | null>(null);
   const [prompt, setPrompt] = useState<string>('panning shot of a mysterious female figure, studio light, solid orange background, motion blur, matte faded film effect --stylize 800');
   const [socialHandle, setSocialHandle] = useState<string>('@pragerfoto');
+  const [generatorName, setGeneratorName] = useState<string>('Midjourney');
   const [selectedRatios, setSelectedRatios] = useState<Record<AspectRatios, boolean>>({
     '9:16': true,
     '2:3': false,
@@ -136,8 +137,8 @@ const App: React.FC = () => {
             }
             ctx.drawImage(image, sx, sy, sWidth, sHeight, 0, 0, canvas.width, canvas.height);
             
-            // --- Draw Social Media Overlay (if handle is provided) ---
-            if (socialHandle.trim() !== '') {
+            // --- Draw Social Media & Generator Overlay ---
+            if (socialHandle.trim() !== '' || generatorName.trim() !== '') {
               const loadIcon = (svg: string): Promise<HTMLImageElement> => {
                 return new Promise((resolve, reject) => {
                   const icon = new Image();
@@ -147,61 +148,88 @@ const App: React.FC = () => {
                 });
               };
               
-              const [instaIcon, pinterIcon] = await Promise.all([loadIcon(INSTAGRAM_SVG), loadIcon(PINTEREST_SVG)]);
+              const iconsToLoad: Promise<HTMLImageElement>[] = [];
+              if (socialHandle.trim() !== '') {
+                  iconsToLoad.push(loadIcon(INSTAGRAM_SVG));
+                  iconsToLoad.push(loadIcon(PINTEREST_SVG));
+              }
+              if (generatorName.trim() !== '') {
+                  iconsToLoad.push(loadIcon(GENERATOR_SVG));
+              }
+
+              const loadedIcons = await Promise.all(iconsToLoad);
+              let iconIndex = 0;
+              let instaIcon, pinterIcon, genIcon;
+              if (socialHandle.trim() !== '') {
+                  instaIcon = loadedIcons[iconIndex++];
+                  pinterIcon = loadedIcons[iconIndex++];
+              }
+              if (generatorName.trim() !== '') {
+                  genIcon = loadedIcons[iconIndex];
+              }
 
               const padding = canvas.width * 0.03;
               const iconSize = canvas.width * 0.035;
               const textPadding = iconSize * 0.3;
-              
               const socialFont = `bold ${iconSize * 0.7}px "Inter", sans-serif`;
               ctx.font = socialFont;
               ctx.textBaseline = 'middle';
               ctx.textAlign = 'left';
               
-              // --- Draw background for social links ---
-              const bgPadding = padding * 0.5;
-              const textWidth = ctx.measureText(socialHandle).width;
-              const pinterestY = padding + iconSize + textPadding * 2;
-              
-              const bgX = padding - bgPadding;
-              const bgY = padding - bgPadding;
-              const bgWidth = iconSize + textPadding + textWidth + (bgPadding * 2);
-              const bgHeight = (pinterestY + iconSize) - padding + (bgPadding * 2);
+              let maxTextWidth = 0;
+              if (socialHandle.trim() !== '') {
+                maxTextWidth = Math.max(maxTextWidth, ctx.measureText(socialHandle).width);
+              }
+              if (generatorName.trim() !== '') {
+                maxTextWidth = Math.max(maxTextWidth, ctx.measureText(generatorName).width);
+              }
 
-              ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
-              ctx.shadowColor = 'transparent';
-              ctx.fillRect(bgX, bgY, bgWidth, bgHeight);
-              
-              // --- Draw Social Icons and Text ---
-              ctx.fillStyle = 'white';
+              const elements: { icon: HTMLImageElement; text: string }[] = [];
+              if (socialHandle.trim() !== '' && instaIcon && pinterIcon) {
+                  elements.push({ icon: instaIcon, text: socialHandle });
+                  elements.push({ icon: pinterIcon, text: socialHandle });
+              }
+              if (generatorName.trim() !== '' && genIcon) {
+                  elements.push({ icon: genIcon, text: generatorName });
+              }
 
-              // Instagram
-              ctx.drawImage(instaIcon, padding, padding, iconSize, iconSize);
-              ctx.fillText(socialHandle, padding + iconSize + textPadding, padding + iconSize / 2);
+              if (elements.length > 0) {
+                const bgPadding = padding * 0.5;
+                const bgX = padding - bgPadding;
+                const bgY = padding - bgPadding;
+                const bgWidth = iconSize + textPadding + maxTextWidth + (bgPadding * 2);
+                
+                const lastElementYPos = padding + (elements.length - 1) * (iconSize + textPadding * 2);
+                const bgHeight = (lastElementYPos + iconSize) - padding + (bgPadding * 2);
+                
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+                ctx.shadowColor = 'transparent';
+                ctx.fillRect(bgX, bgY, bgWidth, bgHeight);
 
-              // Pinterest
-              ctx.drawImage(pinterIcon, padding, pinterestY, iconSize, iconSize);
-              ctx.fillText(socialHandle, padding + iconSize + textPadding, pinterestY + iconSize / 2);
+                ctx.fillStyle = 'white';
+                elements.forEach((el, index) => {
+                    const yPos = padding + index * (iconSize + textPadding * 2);
+                    ctx.drawImage(el.icon, padding, yPos, iconSize, iconSize);
+                    ctx.fillText(el.text, padding + iconSize + textPadding, yPos + iconSize / 2);
+                });
+              }
             }
 
             // --- Draw Prompt Overlay ---
             // Dynamic styling based on aspect ratio
-            let promptAreaY, promptTitleSize, promptBodySize;
+            let promptTitleSize, promptBodySize;
 
             switch (ratio) {
               case '16:9':
-                promptAreaY = canvas.height * 0.60;
                 promptTitleSize = canvas.width * 0.045;
                 promptBodySize = canvas.width * 0.018;
                 break;
               case '4:3':
               case '5:4':
-                promptAreaY = canvas.height * 0.65;
                 promptTitleSize = canvas.width * 0.06;
                 promptBodySize = canvas.width * 0.025;
                 break;
               case '1:1':
-                promptAreaY = canvas.height * 0.70;
                 promptTitleSize = canvas.width * 0.08;
                 promptBodySize = canvas.width * 0.03;
                 break;
@@ -210,12 +238,10 @@ const App: React.FC = () => {
               case '3:4':
               case '4:5':
               default:
-                promptAreaY = canvas.height * 0.75;
                 promptTitleSize = canvas.width * 0.08;
                 promptBodySize = canvas.width * 0.03;
                 break;
             }
-
 
             const promptPaddingX = canvas.width * 0.1;
             const promptMaxWidth = canvas.width - (promptPaddingX * 2);
@@ -232,6 +258,12 @@ const App: React.FC = () => {
             const promptBodyHeight = promptLines.length * lineHeight;
             const totalTextHeight = promptTitleSize + spacing + promptBodyHeight;
             const backgroundPadding = promptBodySize * 1.5;
+            
+            // Position prompt box dynamically from the bottom of the canvas
+            const totalPromptBoxHeight = totalTextHeight + (backgroundPadding * 1.5);
+            const promptBottomMargin = canvas.height * 0.05; 
+            const promptBoxY = canvas.height - promptBottomMargin - totalPromptBoxHeight;
+            const promptAreaY = promptBoxY + backgroundPadding;
 
             // Draw semi-transparent background for readability
             ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
@@ -290,7 +322,7 @@ const App: React.FC = () => {
         setIsLoading(false);
         setError("Nem sikerült betölteni a képfájlt.");
     };
-  }, [sourceImage, prompt, socialHandle, selectedRatios]);
+  }, [sourceImage, prompt, socialHandle, generatorName, selectedRatios]);
 
   return (
     <div className="bg-gray-900 min-h-screen text-gray-200 font-sans antialiased">
@@ -335,13 +367,27 @@ const App: React.FC = () => {
                   rows={4} 
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
+                  maxLength={400}
                   className="block p-2.5 w-full text-sm text-white bg-gray-700 rounded-lg border border-gray-600 focus:ring-blue-500 focus:border-blue-500" 
                   placeholder="Your AI prompt here..."
                 ></textarea>
+                <p className="text-right text-xs text-gray-400 mt-1">{prompt.length} / 400</p>
               </div>
 
               <div>
-                <h3 className="block text-sm font-medium text-gray-300 mb-2">4. Képarányok kiválasztása</h3>
+                <label htmlFor="generator" className="block text-sm font-medium text-gray-300 mb-2">4. Generátor neve (opcionális)</label>
+                <input 
+                  type="text" 
+                  id="generator" 
+                  value={generatorName}
+                  onChange={(e) => setGeneratorName(e.target.value)}
+                  className="bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5" 
+                  placeholder="pl. Midjourney"
+                />
+              </div>
+
+              <div>
+                <h3 className="block text-sm font-medium text-gray-300 mb-2">5. Képarányok kiválasztása</h3>
                 <div className="flex flex-wrap gap-3">
                   {ratioOrder.map(ratio => (
                     <button 
